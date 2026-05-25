@@ -19,6 +19,7 @@ from .pose_extraction.smpl_extractor import SMPLExtractor
 from .nsf.io import save_nsf, load_nsf
 from .retargeting.urdf_retargeter import URDFRetargeter
 from .retargeting.smpl_retargeter import SMPLRetargeter
+from .retargeting.geo_retargeter import GeoRetargeter
 from .motion_builder import build_npz
 
 _EXTRACTORS = {
@@ -95,7 +96,7 @@ def run(
     if extractor == "smpl" or hasattr(seq, "_smpl_rotmats"):
         retargeter = SMPLRetargeter()
     else:
-        retargeter = URDFRetargeter(urdf_path, mesh_dir, robot_name)
+        retargeter = GeoRetargeter()
     result = retargeter.retarget(seq)
     print(f"[pipeline] Retargeted: {result['dof_positions'].shape[0]} frames, "
           f"{result['dof_positions'].shape[1]} DOFs")
