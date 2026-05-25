@@ -48,6 +48,10 @@ class SMPLExtractor(BasePoseExtractor):
     Also populates an NSFSequence so the rest of the pipeline stays compatible.
     """
 
+    @property
+    def name(self) -> str:
+        return "smpl"
+
     def __init__(
         self,
         checkpoint_path: Optional[str] = None,
