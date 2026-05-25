@@ -15,13 +15,16 @@ from pathlib import Path
 
 from .pose_extraction.mediapipe_extractor import MediaPipeExtractor
 from .pose_extraction.bvh_extractor import BVHExtractor
+from .pose_extraction.smpl_extractor import SMPLExtractor
 from .nsf.io import save_nsf, load_nsf
 from .retargeting.urdf_retargeter import URDFRetargeter
+from .retargeting.smpl_retargeter import SMPLRetargeter
 from .motion_builder import build_npz
 
 _EXTRACTORS = {
     "mediapipe": MediaPipeExtractor,
     "bvh":       BVHExtractor,
+    "smpl":      SMPLExtractor,
 }
 
 _VIDEO_EXTS = {".mp4", ".avi", ".mov", ".mkv", ".webm"}
@@ -29,8 +32,10 @@ _BVH_EXTS   = {".bvh"}
 _NSF_EXTS   = {".npz"}
 
 
-def auto_extractor(source: Path):
+def auto_extractor(source: Path, extractor: str = "auto"):
     ext = source.suffix.lower()
+    if extractor == "smpl":
+        return SMPLExtractor()
     if ext in _VIDEO_EXTS:
         return MediaPipeExtractor()
     if ext in _BVH_EXTS:
@@ -75,8 +80,8 @@ def run(
         print(f"[pipeline] Loading NSF directly from {input_path}")
         seq = load_nsf(input_path)
     else:
-        ext_cls = _EXTRACTORS.get(extractor) if extractor != "auto" else None
-        extr = ext_cls() if ext_cls else auto_extractor(input_path)
+        ext_cls = _EXTRACTORS.get(extractor) if extractor not in ("auto",) else None
+        extr = ext_cls() if ext_cls else auto_extractor(input_path, extractor)
         print(f"[pipeline] Extracting pose with {extr.name} from {input_path}")
         seq = extr.extract(input_path)
         if nsf_path:
@@ -87,7 +92,10 @@ def run(
 
     # ── Step 2: Retargeting → robot joint angles ─────────────────────────────
     print(f"[pipeline] Retargeting to {robot_name} …")
-    retargeter = URDFRetargeter(urdf_path, mesh_dir, robot_name)
+    if extractor == "smpl" or hasattr(seq, "_smpl_rotmats"):
+        retargeter = SMPLRetargeter()
+    else:
+        retargeter = URDFRetargeter(urdf_path, mesh_dir, robot_name)
     result = retargeter.retarget(seq)
     print(f"[pipeline] Retargeted: {result['dof_positions'].shape[0]} frames, "
           f"{result['dof_positions'].shape[1]} DOFs")
@@ -108,7 +116,7 @@ def main():
     parser.add_argument("--robot",   default="g1",  help="Robot name label")
     parser.add_argument("--nsf-cache", default=None, help="Save/load NSF at this path")
     parser.add_argument("--extractor", default="auto",
-                        choices=["auto", "mediapipe", "bvh"])
+                        choices=["auto", "mediapipe", "bvh", "smpl"])
     parser.add_argument("--skip-extract", action="store_true",
                         help="Use cached NSF if available")
     args = parser.parse_args()
