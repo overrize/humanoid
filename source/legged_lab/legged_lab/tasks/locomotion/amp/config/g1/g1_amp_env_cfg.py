@@ -234,8 +234,8 @@ class G1AmpEnvCfg_PLAY(G1AmpEnvCfg):
         self.scene.num_envs = 48
         self.scene.env_spacing = 2.5
 
-        self.commands.base_velocity.ranges.lin_vel_x = (0.5, 3.0)
-        self.commands.base_velocity.ranges.lin_vel_y = (-0.5, 0.5)
+        self.commands.base_velocity.ranges.lin_vel_x = (2.5, 3.0)
+        self.commands.base_velocity.ranges.lin_vel_y = (-0.1, 0.1)
         self.commands.base_velocity.ranges.ang_vel_z = (-1.0, 1.0)
         self.commands.base_velocity.ranges.heading = (0.0, 0.0)
 

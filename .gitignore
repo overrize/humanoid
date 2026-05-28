@@ -2,3 +2,22 @@ __pycache__/
 *.pyc
 *.log
 MUJOCO_LOG.TXT
+
+# Training outputs (large binary artifacts)
+logs/
+outputs/
+scripts/rsl_rl/logs/
+scripts/rsl_rl/outputs/
+wandb/
+
+# Motion data (large binary files — managed separately)
+source/legged_lab/legged_lab/data/MotionData/
+source/legged_lab/legged_lab/data/Robots/
+
+# Generated images
+*.png
+*.jpg
+*.jpeg
+
+# Python packaging artifacts
+*.egg-info/

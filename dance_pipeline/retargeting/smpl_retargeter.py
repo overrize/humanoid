@@ -255,12 +255,13 @@ class SMPLRetargeter(BaseRetargeter):
         dt = 1.0 / seq.fps
         vel = np.gradient(dof, dt, axis=0).astype(np.float32)
 
-        # Root pose from global_orient (SMPL joint 0)
-        global_orient = rm[:, 0, :, :]  # (T,3,3)
-        root_quats = Rotation.from_matrix(global_orient).as_quat()  # xyzw
-        root_quats_wxyz = np.concatenate([root_quats[:, 3:4], root_quats[:, :3]], axis=-1)
+        # Root pose: lock to canonical identity orientation.
+        # HMR2 global_orient has no temporal consistency (each frame independently
+        # estimated from camera) — using it directly causes the skeleton to spin.
+        # Only body_pose (joints 1-23) carries the actual motion signal.
+        root_quats_wxyz = np.tile([1.0, 0.0, 0.0, 0.0], (T, 1)).astype(np.float32)  # wxyz identity
 
-        root_positions = seq.positions[:, 0, :] if seq.positions is not None else np.zeros((T, 3))
+        root_positions = np.zeros((T, 3), dtype=np.float32)
 
         return {
             "root_positions":  root_positions.astype(np.float32),
