@@ -454,21 +454,25 @@ def main():
         data.qpos[7:36] = ref_jp_all_bfs[frame_idx][DFS_TO_BFS]  # BFS→DFS
         data.qvel[:]    = 0.0
         height_offset   = _snap_to_ground(model, data)
-        print(f"[sim2sim] Standing mode (NPZ frame {frame_idx})  pelvis_z={data.qpos[2]:.4f} m")
-        # Build frozen reference from the same frame
-        _ref_model = mujoco.MjModel.from_xml_path(args.xml)
-        _ref_data  = mujoco.MjData(_ref_model)
-        _ref_data.qpos[0:3]  = ref_bpos_all[frame_idx, 0]
-        _ref_data.qpos[2]   += height_offset
-        _ref_data.qpos[3:7]  = ref_bquat_all[frame_idx, 0]
-        _ref_data.qpos[7:36] = ref_jp_all_bfs[frame_idx][DFS_TO_BFS]
-        mujoco.mj_forward(_ref_model, _ref_data)
-        _stand_ref_tp = _ref_data.xpos[MJ_ANCHOR_ID].copy()
-        _stand_ref_tq = _ref_data.xquat[MJ_ANCHOR_ID].copy()
-        _stand_ref_jp = ref_jp_all_bfs[frame_idx].astype(np.float32)
-        _stand_ref_jv = ref_jv_all_bfs[frame_idx].astype(np.float32)
+        # Standing mode: loop through a ±50-frame window around the best start frame
+        # so the reference is gently varying (in-distribution) rather than frozen.
+        # A perfectly frozen reference is out-of-distribution for the WBT policy
+        # (trained with an always-advancing reference) and causes oscillation.
+        _STAND_HALF = 50   # ±50 frames = ±1 second at 50 fps
+        _stand_lo   = max(0, frame_idx - _STAND_HALF)
+        _stand_hi   = min(T_total - 1, frame_idx + _STAND_HALF)
+        _stand_frames = np.arange(_stand_lo, _stand_hi + 1)
+        print(f"[sim2sim] Standing mode  centre={frame_idx}  "
+              f"window=[{_stand_lo},{_stand_hi}] ({len(_stand_frames)} frames = "
+              f"{len(_stand_frames)/fps:.1f} s loop)  pelvis_z={data.qpos[2]:.4f} m")
+        ref_fk = RefFK(args.xml, ref_jp_all_bfs, ref_bpos_all, ref_bquat_all,
+                       height_offset=height_offset)
+        _stand_tick = [0]
         def get_ref(_frame):
-            return _stand_ref_tp, _stand_ref_tq, _stand_ref_jp, _stand_ref_jv
+            t = int(_stand_frames[_stand_tick[0] % len(_stand_frames)])
+            _stand_tick[0] += 1
+            tp, tq = ref_fk.get(t)
+            return tp, tq, ref_jp_all_bfs[t].astype(np.float32), ref_jv_all_bfs[t].astype(np.float32)
     else:
         # NPZ playback or frozen NPZ frame
         data.qpos[0:3]  = ref_bpos_all[frame_idx, 0]
@@ -576,6 +580,20 @@ def main():
 
             if args.playback:
                 frame_idx += 1
+
+            # Auto-reset when the robot falls (pelvis z < 0.3 m)
+            if data.qpos[2] < 0.3:
+                reset_frame = frame_idx % T_total
+                print(f"[sim2sim] *** FELL — resetting to frame {reset_frame} ***")
+                data.qpos[0:3]  = ref_bpos_all[reset_frame, 0]
+                data.qpos[3:7]  = ref_bquat_all[reset_frame, 0]
+                data.qpos[7:36] = ref_jp_all_bfs[reset_frame][DFS_TO_BFS]
+                data.qvel[:]    = 0.0
+                _snap_to_ground(model, data)
+                last_action_bfs[:] = 0.0
+                _push['steps_left'] = 0
+                _push['force'][:]   = 0.0
+                data.xfrc_applied[MJ_PELVIS_ID] = 0.0
 
             sleep_t = policy_dt - (time.perf_counter() - t_wall)
             if sleep_t > 0:
