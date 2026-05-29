@@ -55,7 +55,7 @@ from datetime import datetime
 
 from isaaclab.envs import ManagerBasedRLEnvCfg
 from isaaclab.utils.dict import print_dict
-from isaaclab.utils.io import dump_pickle, dump_yaml
+from isaaclab.utils.io import dump_yaml
 from isaaclab_rl.rsl_rl import RslRlOnPolicyRunnerCfg, RslRlVecEnvWrapper
 from isaaclab_tasks.utils import get_checkpoint_path
 from isaaclab_tasks.utils.hydra import hydra_task_config
@@ -117,8 +117,6 @@ def main(env_cfg: ManagerBasedRLEnvCfg, agent_cfg: RslRlOnPolicyRunnerCfg):
 
     dump_yaml(os.path.join(log_dir, "params", "env.yaml"), env_cfg)
     dump_yaml(os.path.join(log_dir, "params", "agent.yaml"), agent_cfg)
-    dump_pickle(os.path.join(log_dir, "params", "env.pkl"), env_cfg)
-    dump_pickle(os.path.join(log_dir, "params", "agent.pkl"), agent_cfg)
 
     runner.learn(num_learning_iterations=agent_cfg.max_iterations, init_at_random_ep_len=True)
     env.close()
