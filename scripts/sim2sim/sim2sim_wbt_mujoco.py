@@ -439,16 +439,16 @@ def main():
     policy_dt = args.sim_dt * args.decimation
     if args.frame is not None:
         frame_idx = int(args.frame) % T_total
-    elif args.playback:
+    elif args.playback or args.standing:
         frame_idx = _best_start_frame(ref_jp_all_bfs)
     else:
         frame_idx = 0
 
     if args.standing:
-        # Standing balance test: initialise from NPZ frame 0 (upright pose, CoM centred),
-        # then freeze the reference at that same frame.
-        # DEFAULT_DFS (bent knees) is not a stable equilibrium in g1_29dof.xml;
-        # NPZ frame 0 has nearly straight legs and CoM ≈ 0 over the contact patch.
+        # Standing balance test: initialise from the best-matched NPZ frame (closest
+        # to DEFAULT_BFS), then oscillate the reference through a ±50-frame window
+        # centred there so the policy sees a gently moving reference rather than a
+        # frozen one (a frozen reference is out-of-distribution for WBT).
         data.qpos[0:3]  = ref_bpos_all[frame_idx, 0]
         data.qpos[3:7]  = ref_bquat_all[frame_idx, 0]
         data.qpos[7:36] = ref_jp_all_bfs[frame_idx][DFS_TO_BFS]  # BFS→DFS
