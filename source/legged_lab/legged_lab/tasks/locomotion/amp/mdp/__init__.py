@@ -4,3 +4,6 @@ from legged_lab.tasks.locomotion.deepmimic.mdp import *
 
 from .observations import *
 from .rewards import *
+from .events import *
+from .commands import *
+from .curriculums import *

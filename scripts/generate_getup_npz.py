@@ -193,46 +193,91 @@ def _joints(d: dict) -> np.ndarray:
     return out
 
 
-# shoulders slightly open to give balance during transition
-_SHOULDER_BRACE = {
-    "left_shoulder_pitch_joint": 0.3,
-    "left_shoulder_roll_joint":  0.4,
-    "right_shoulder_pitch_joint": 0.3,
+# ── arm pose presets ──────────────────────────────────────────────────────────
+# Phase 0 – supine: arms relaxed, slightly abducted for ground clearance
+_ARMS_SUPINE = {
+    "left_shoulder_pitch_joint":  0.0,
+    "left_shoulder_roll_joint":   0.5,
+    "left_elbow_joint":           0.3,
+    "right_shoulder_pitch_joint": 0.0,
+    "right_shoulder_roll_joint": -0.5,
+    "right_elbow_joint":          0.3,
+}
+
+# Phase 1 – knees tuck: arms begin moving toward push position
+_ARMS_TUCK = {
+    "left_shoulder_pitch_joint":  0.9,
+    "left_shoulder_roll_joint":   0.4,
+    "left_elbow_joint":           1.1,
+    "right_shoulder_pitch_joint": 0.9,
     "right_shoulder_roll_joint": -0.4,
+    "right_elbow_joint":          1.1,
+}
+
+# Phase 2 – push (45° tilt): shoulder + elbow reach forward-downward so hands
+# are near ground level; wrist_pitch slightly negative extends palm for push
+_ARMS_PUSH = {
+    "left_shoulder_pitch_joint":  1.5,
+    "left_shoulder_roll_joint":   0.3,
+    "left_elbow_joint":           1.3,
+    "left_wrist_pitch_joint":    -0.2,
+    "right_shoulder_pitch_joint": 1.5,
+    "right_shoulder_roll_joint": -0.3,
+    "right_elbow_joint":          1.3,
+    "right_wrist_pitch_joint":   -0.2,
+}
+
+# Phase 3 – upright squat: arms transitioning off ground toward thighs
+_ARMS_SQUAT = {
+    "left_shoulder_pitch_joint":  0.9,
+    "left_shoulder_roll_joint":   0.3,
+    "left_elbow_joint":           1.0,
+    "right_shoulder_pitch_joint": 0.9,
+    "right_shoulder_roll_joint": -0.3,
+    "right_elbow_joint":          1.0,
+}
+
+# Phase 4 – shallow squat: arms returning toward natural hang
+_ARMS_SHALLOW = {
+    "left_shoulder_pitch_joint":  0.4,
+    "left_shoulder_roll_joint":   0.2,
+    "left_elbow_joint":           0.7,
+    "right_shoulder_pitch_joint": 0.4,
+    "right_shoulder_roll_joint": -0.2,
+    "right_elbow_joint":          0.7,
 }
 
 KEYFRAMES = [
     # t, pelvis_quat_wxyz, joint_angles_dfs
     (0.0,
      np.array([0.707, 0.0, -0.707, 0.0], np.float32),
-     _joints({})),
+     _joints(_ARMS_SUPINE)),
 
     (1.0,
      np.array([0.707, 0.0, -0.707, 0.0], np.float32),
      _joints({"left_hip_pitch_joint": -1.2, "right_hip_pitch_joint": -1.2,
               "left_knee_joint": 1.5, "right_knee_joint": 1.5,
-              **_SHOULDER_BRACE})),
+              **_ARMS_TUCK})),
 
     (2.2,
      np.array([0.924, 0.0, -0.383, 0.0], np.float32),   # ~45° toward upright
      _joints({"left_hip_pitch_joint": -1.0, "right_hip_pitch_joint": -1.0,
               "left_knee_joint": 1.3, "right_knee_joint": 1.3,
-              **_SHOULDER_BRACE})),
+              **_ARMS_PUSH})),
 
     (3.2,
      np.array([1.0, 0.0, 0.0, 0.0], np.float32),
      _joints({"left_hip_pitch_joint": -1.1, "right_hip_pitch_joint": -1.1,
               "left_knee_joint": 1.4, "right_knee_joint": 1.4,
               "left_ankle_pitch_joint": -0.3, "right_ankle_pitch_joint": -0.3,
-              **_SHOULDER_BRACE})),
+              **_ARMS_SQUAT})),
 
     (4.2,
      np.array([1.0, 0.0, 0.0, 0.0], np.float32),
      _joints({"left_hip_pitch_joint": -0.55, "right_hip_pitch_joint": -0.55,
               "left_knee_joint": 0.95, "right_knee_joint": 0.95,
               "left_ankle_pitch_joint": -0.35, "right_ankle_pitch_joint": -0.35,
-              "left_shoulder_pitch_joint": 0.2, "left_shoulder_roll_joint": 0.2,
-              "right_shoulder_pitch_joint": 0.2, "right_shoulder_roll_joint": -0.2})),
+              **_ARMS_SHALLOW})),
 
     (5.2,
      np.array([1.0, 0.0, 0.0, 0.0], np.float32),
