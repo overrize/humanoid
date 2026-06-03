@@ -100,8 +100,13 @@ for iteration in range(MAX_ITER):
 
 - [x] HMR2.0 实时推理验证（USB 摄像头，~30fps）
 - [x] 设计文档
-- [ ] MuJoCo G1 模型加载 + data.ctrl 接入
-- [ ] 几何打分函数
+- [x] MuJoCo G1 sim2sim 基础设施（`sim2sim_g1_amp.py`，ISL 关节序，PD 增益）
+- [x] `sim2sim/motion_player.py`：开环关节角轨迹注入，记录实际轨迹 + geo_error
+- [x] WBT policy（`models/wbt_g1_v1/model_29999.pt`）在 MuJoCo 中验证可用
+      - standing mode：`--frame 4557` 指定静止帧（`/tmp/combined_g1_50fps.npz`）
+      - playback mode：`/tmp/walk_test.npz`（frames 766~946）正常前进步行
+- [ ] dance_pipeline NPZ → WBT NPZ 格式转换（ISL 序 → BFS 序 + 全身 FK）
+- [ ] 几何打分函数（接入 motion_player 输出）
 - [ ] VLM API 接入（选定 key 后）
 - [ ] 迭代控制循环
 
