@@ -27,7 +27,7 @@ KEY_BODY_NAMES = [
 ANIMATION_TERM_NAME = "animation"
 AMP_NUM_STEPS = 10
 BASE_BODY_NAME = "torso_link"
-TARGET_BASE_HEIGHT_PHASE3 = 0.65
+TARGET_BASE_HEIGHT_PHASE3 = 0.40
 BASE_HEIGHT_TARGET = 0.75
 
 
@@ -244,6 +244,14 @@ class RewardsCfg:
         weight=-0.1,
         params={
             "target_base_height_phase3": TARGET_BASE_HEIGHT_PHASE3,
+            "asset_cfg": SceneEntityCfg("robot"),
+        },
+    )
+    base_height_raw = RewTerm(
+        func=mdp.base_height_raw,
+        weight=3.0,
+        params={
+            "target_height": BASE_HEIGHT_TARGET,
             "asset_cfg": SceneEntityCfg("robot"),
         },
     )

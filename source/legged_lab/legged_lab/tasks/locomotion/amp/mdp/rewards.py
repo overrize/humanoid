@@ -82,6 +82,15 @@ def target_base_height(
     return torch.exp(torch.abs(base_height - base_height_target) * -20.0) * standup
 
 
+def base_height_raw(
+    env: ManagerBasedRLEnv, target_height: float, asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")
+) -> torch.Tensor:
+    """Continuous height reward active at all heights: linearly ramps from 0 to 1 as height → target_height."""
+    asset: Articulation = env.scene[asset_cfg.name]
+    h = asset.data.root_link_pos_w[:, 2]
+    return torch.clamp(h / target_height, 0.0, 1.0)
+
+
 def target_joint_deviation_l2(
     env: ManagerBasedRLEnv, target_base_height_phase3: float, asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")
 ) -> torch.Tensor:

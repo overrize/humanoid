@@ -9,7 +9,7 @@ class G1RslRlOnPolicyRunnerAmpCfg(RslRlOnPolicyRunnerCfg):
     class_name = "AMPRunner"
     num_steps_per_env = 24
     max_iterations = 500000
-    save_interval = 50
+    save_interval = 500
     experiment_name = "g1_amp_get_up"
     obs_groups = {
         "policy": ["policy"],
